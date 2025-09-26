@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Holiday Planner — Reveria Travel</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    /* Modern Look & Feel with Animations */
+    :root {
+      --bs-primary-rgb: 71, 138, 201; /* A softer blue */
+      --bs-body-font-family: 'Poppins', sans-serif;
+    }
+
+    body { 
+      background: #f8f9fa; 
+      min-height:100vh;
+      font-weight: 400;
+    }
+
+    /* --- Animation Keyframes --- */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animated-section {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    /* --- Header & Banner --- */
+    .app-header { 
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .hero-banner {
+      height: 45vh;
+      background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2070&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .hero-banner h1 {
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    .hero-banner p {
+      font-size: 1.2rem;
+      font-weight: 300;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    /* --- Card & Component Styling --- */
+    .card {
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      transition: all .2s ease-in-out;
+    }
+    .card-compact { padding: .75rem; }
+    .destination-card { 
+      cursor: pointer; 
+    }
+    .destination-card:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    .destination-card.active {
+      box-shadow: 0 0 0 2px var(--bs-primary);
+    }
+
+    .btn {
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all .2s ease-in-out;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .tag { font-size: .75rem; border-radius: 6px; }
+    #map-placeholder { background:#e9ecef; min-height:120px; display:flex;align-items:center;justify-content:center;color:#6c757d; border-radius: 8px; }
+    .list-group-item {
+      animation: fadeIn 0.4s ease;
+    }
+    
+    @media (max-width:576px){ .desktop-only { display:none !important } }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg sticky-top app-header">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#"><i class="bi bi-compass-fill me-2"></i>Holiday Planner</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#search">Destinations</a></li>
+          <li class="nav-item"><a class="nav-link" href="#itinerary">Itinerary</a></li>
+          <li class="nav-item"><a class="nav-link" href="#budget">Budget</a></li>
+          <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#bookingsModal"><i class="bi bi-briefcase-fill me-1"></i>My Bookings</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero-banner">
+    <div class="container">
+      <h1 class="display-4">Plan Your Next Adventure</h1>
+      <p class="lead">Discover destinations, build your itinerary, and track your budget with ease.</p>
+    </div>
+  </header>
+
+  <main class="container my-4 my-lg-5">
+    <div class="row g-4">
+      <section id="search" class="col-12 col-lg-7 animated-section" style="animation-delay: 0.1s;">
+        <div class="card card-compact">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">Find a destination</h5>
+            <p class="text-muted">Filter by interest or quick search a city.</p>
+
+            <div class="row gy-2 gx-2 align-items-end">
+              <div class="col-6 col-sm-5">
+                <label class="form-label">Interest</label>
+                <select id="interestFilter" class="form-select">
+                  <option value="all">All</option>
+                  <option value="beach">Beach</option>
+                  <option value="mountain">Mountain</option>
+                  <option value="city">City</option>
+                  <option value="adventure">Adventure</option>
+                </select>
+              </div>
+              <div class="col-6 col-sm-5">
+                <label class="form-label">Keyword</label>
+                <input id="keyword" class="form-control" placeholder="e.g. Goa, Alps, Tokyo">
+              </div>
+              <div class="col-12 col-sm-2 d-grid">
+                <button id="filterBtn" class="btn btn-primary">Search</button>
+              </div>
+            </div>
+
+            <hr>
+            <div id="destinations" class="row g-3 mt-2"></div>
+          </div>
+        </div>
+
+        <div class="card card-compact mt-4">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">Selected Trip Details</h5>
+            <div id="selectedInfo" class="mb-3 text-muted">No destination selected.</div>
+
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label">Accommodation</label>
+                <select id="accommodation" class="form-select">
+                  <option value="none">Select accommodation</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Transport</label>
+                <select id="transport" class="form-select">
+                  <option value="none">Select transport</option>
+                </select>
+              </div>
+              <div class="col-12 d-grid mt-2">
+                <button id="saveSelection" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Save Selection</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <aside class="col-12 col-lg-5">
+        <div id="itinerary" class="card card-compact mb-4 animated-section" style="animation-delay: 0.2s;">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">Trip Itinerary</h5>
+            <p class="text-muted">Add activities with dates and times.</p>
+            <div class="mb-3" id="map-placeholder">Map & photos placeholder</div>
+
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-sm-6">
+                <label class="form-label">Activity</label>
+                <input id="activityName" class="form-control" placeholder="e.g., City tour">
+              </div>
+              <div class="col-6 col-sm-3">
+                <label class="form-label">Date</label>
+                <input id="activityDate" type="date" class="form-control">
+              </div>
+              <div class="col-6 col-sm-3">
+                <label class="form-label">Time</label>
+                <input id="activityTime" type="time" class="form-control">
+              </div>
+              <div class="col-8">
+                <label class="form-label">Estimated cost</label>
+                <input id="activityCost" type="number" min="0" class="form-control" placeholder="0">
+              </div>
+              <div class="col-4 d-grid">
+                <button id="addActivity" class="btn btn-outline-primary">Add</button>
+              </div>
+            </div>
+
+            <hr>
+            <ul id="itineraryList" class="list-group list-group-flush"></ul>
+            <div class="mt-3 d-flex gap-2">
+              <button id="exportItinerary" class="btn btn-sm btn-secondary">Export JSON</button>
+              <button id="clearItinerary" class="btn btn-sm btn-outline-danger">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="budget" class="card card-compact animated-section" style="animation-delay: 0.3s;">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">Budget Tracker</h5>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label">Flight / Train</label>
+                <input id="costTransport" type="number" min="0" class="form-control" placeholder="0">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Accommodation</label>
+                <input id="costAccommodation" type="number" min="0" class="form-control" placeholder="0">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Activities</label>
+                <input id="costActivities" type="number" min="0" class="form-control" placeholder="0" readonly>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Other</label>
+                <input id="costOther" type="number" min="0" class="form-control" placeholder="0">
+              </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="text-muted">Estimated total</div>
+                <div id="budgetTotal" class="h4 mb-0 fw-bold">₹0</div>
+              </div>
+              <div>
+                <button id="recalcBudget" class="btn btn-primary">Recalculate</button>
+                <button id="saveTrip" class="btn btn-success"><i class="bi bi-save me-1"></i>Save Trip</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="col-12 mt-3">
+        <div class="d-flex gap-2 justify-content-between flex-wrap">
+          <div>
+            <button id="loadSample" class="btn btn-outline-secondary btn-sm">Load sample destinations</button>
+            <button id="resetApp" class="btn btn-outline-danger btn-sm">Reset app</button>
+          </div>
+          <div class="text-muted small">Data stored locally in your browser.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="text-center py-4 text-muted small mt-5">Built with ❤️ — Holiday Planner demo • Mobile & Desktop friendly</footer>
+
+  <div class="modal fade" id="bookingsModal" tabindex="-1" aria-labelledby="bookingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bookingsModalLabel">My Saved Trips</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bookingsModalBody">
+          </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-danger" id="clearAllBookings">Clear All Bookings</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ---------- Sample data ----------
+  const SAMPLE_DESTINATIONS = [
+    { id:'goa', name:'Goa', tags:['beach','city'], desc:'Sandy beaches, seafood, nightlife.', accommodations:[{id:'g1',name:'Beach Resort',price:4000},{id:'g2',name:'Budget Guesthouse',price:1800}], transports:[{id:'t1',name:'Flight',price:7000},{id:'t2',name:'Train',price:800}] , img:''},
+    { id:'manali', name:'Manali', tags:['mountain','adventure'], desc:'Himachal hills, trekking and rivers.', accommodations:[{id:'m1',name:'Mountain Lodge',price:3500},{id:'m2',name:'Hostel',price:900}], transports:[{id:'t1',name:'Flight to Bhuntar+Taxi',price:8000},{id:'t2',name:'Bus',price:1200}], img:''},
+    { id:'tokyo', name:'Tokyo', tags:['city'], desc:'Modern city with culture and food.', accommodations:[{id:'t1',name:'City Hotel',price:6000},{id:'t2',name:'Capsule Inn',price:2000}], transports:[{id:'f1',name:'Flight',price:43000}], img:''},
+    { id:'ladakh', name:'Ladakh', tags:['mountain','adventure'], desc:'High altitude, lakes, and biking.', accommodations:[{id:'l1',name:'Camp',price:2500}], transports:[{id:'f1',name:'Flight',price:15000}], img:''},
+    { id:'maldives', name:'Maldives', tags:['beach','adventure'], desc:'Tropical island, diving and luxury.', accommodations:[{id:'ma1',name:'Water Villa',price:25000}], transports:[{id:'f1',name:'Flight',price:32000}] , img:''}
+  ];
+
+  // ---------- App state & persistence ----------
+  const STATE_KEY = 'holiday_planner_v1';
+  let state = {
+    destinations: [],
+    selected: null,
+    selectionDetails: { accommodation:null, transport:null },
+    itinerary: [],
+    budget: { transport:0, accommodation:0, activities:0, other:0 }
+  };
+
+  function saveState(){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+  function loadState(){ const s = localStorage.getItem(STATE_KEY); if(!s) return false; try{ state = JSON.parse(s); return true }catch(e){return false} }
+
+  // ---------- UI helpers ----------
+  function renderDestinations(list){ 
+    const container = $('#destinations'); 
+    container.empty(); 
+    if(!list.length) { 
+      container.append('<div class="col-12 text-muted">No results</div>'); 
+      return; 
+    }
+    list.forEach(d=>{
+      const col = $(`<div class="col-12 col-md-6">
+        <div class="card destination-card" data-id="${d.id}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h6 class="mb-1 fw-semibold">${d.name}</h6>
+                <div class="text-muted small">${d.desc}</div>
+                <div class="mt-2">${d.tags.map(t=>`<span class="badge bg-light text-dark me-1 tag">${t}</span>`).join('')}</div>
+              </div>
+              <div class="desktop-only text-end">
+                <div class="fw-semibold">From ₹${Math.min(...d.accommodations.map(a=>a.price))}</div>
+                <div class="small text-muted">est. stay</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`);
+      if(d.id === state.selected){
+          col.find('.destination-card').addClass('active');
+      }
+      col.find('.destination-card').on('click',()=>selectDestination(d.id));
+      container.append(col);
+    });
+  }
+
+  function selectDestination(id){ 
+    const dest = state.destinations.find(x=>x.id===id); 
+    if(!dest) return; 
+    state.selected = id; 
+    state.selectionDetails = { accommodation:null, transport:null }; 
+    $('#selectedInfo').html(`<strong class="text-primary">${dest.name}</strong> — <span class="text-muted small">${dest.desc}</span>`);
+    
+    // Highlight selected card
+    $('.destination-card').removeClass('active');
+    $(`.destination-card[data-id="${id}"]`).addClass('active');
+
+    // Populate accommodation & transport
+    const acc = $('#accommodation'); 
+    acc.empty().append('<option value="none">Select accommodation</option>'); 
+    dest.accommodations.forEach(a=> acc.append(`<option value="${a.id}" data-price="${a.price}">${a.name} — ₹${a.price}/night</option>`));
+    
+    const tr = $('#transport'); 
+    tr.empty().append('<option value="none">Select transport</option>'); 
+    dest.transports.forEach(t=> tr.append(`<option value="${t.id}" data-price="${t.price}">${t.name} — ₹${t.price}</option>`));
+    
+    $('#map-placeholder').text(dest.name + ' — photos and map');
+    saveState(); 
+    renderBudget(); 
+    renderItinerary();
+  }
+
+  function refreshSelectionControls(){ 
+    if(!state.selected) return; 
+    const dest = state.destinations.find(x=>x.id===state.selected); 
+    if(!dest) return; 
+    if(state.selectionDetails.accommodation){ $('#accommodation').val(state.selectionDetails.accommodation); }
+    if(state.selectionDetails.transport){ $('#transport').val(state.selectionDetails.transport); }
+  }
+
+  // ---------- Itinerary ----------
+  function addActivity(){ 
+    const name = $('#activityName').val().trim(); 
+    const date = $('#activityDate').val(); 
+    const time = $('#activityTime').val(); 
+    const cost = Number($('#activityCost').val()) || 0; 
+    if(!name||!date||!time){ alert('Please enter activity name, date and time.'); return; }
+    
+    const id = 'a_' + Date.now(); 
+    state.itinerary.push({ id, name, date, time, cost }); 
+    state.budget.activities = state.itinerary.reduce((s,a)=>s+a.cost,0);
+    
+    $('#activityName, #activityDate, #activityTime, #activityCost').val(''); 
+    renderItinerary(); 
+    renderBudget(); 
+    saveState();
+  }
+
+  function renderItinerary(){ 
+    const list = $('#itineraryList'); 
+    list.empty(); 
+    if(!state.itinerary.length) { 
+      list.append('<li class="list-group-item text-muted">No activities yet.</li>'); 
+      return; 
+    }
+    state.itinerary.forEach(act=>{
+      const li = $(`<li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">${act.name}</div>
+          <div class="small text-muted">${act.date} • ${act.time} • ₹${act.cost}</div>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-outline-danger btn-del"><i class="bi bi-trash"></i></button>
+        </div>
+      </li>`);
+      li.find('.btn-del').on('click',()=>{ 
+        state.itinerary = state.itinerary.filter(x=>x.id!==act.id); 
+        state.budget.activities = state.itinerary.reduce((s,a)=>s+a.cost,0); 
+        renderItinerary(); 
+        renderBudget(); 
+        saveState(); 
+      });
+      list.append(li);
+    });
+  }
+
+  // ---------- Budget ----------
+  function renderBudget(){ 
+    $('#costActivities').val(state.budget.activities || 0); 
+    $('#costTransport').val(state.budget.transport || 0); 
+    $('#costAccommodation').val(state.budget.accommodation || 0); 
+    $('#costOther').val(state.budget.other || 0);
+    
+    const total = (Number($('#costTransport').val())||0) + (Number($('#costAccommodation').val())||0) + (Number($('#costActivities').val())||0) + (Number($('#costOther').val())||0);
+    $('#budgetTotal').text('₹' + total.toLocaleString('en-IN'));
+  }
+
+  function recalcBudgetFromSelection(){ 
+    if(state.selected){ 
+      const dest = state.destinations.find(x=>x.id===state.selected); 
+      if(dest){ 
+        const accId = $('#accommodation').val(); 
+        const acc = dest.accommodations.find(a=>a.id===accId); 
+        state.budget.accommodation = acc ? acc.price : 0; 
+        
+        const trId = $('#transport').val(); 
+        const tr = dest.transports.find(t=>t.id===trId); 
+        state.budget.transport = tr ? tr.price : 0; 
+      }
+    }
+    state.budget.other = Number($('#costOther').val())||0; 
+    state.budget.activities = state.itinerary.reduce((s,a)=>s+a.cost,0);
+    saveState(); 
+    renderBudget();
+  }
+
+  // ---------- Save / load / export ----------
+  function saveTrip(){ 
+    if(!state.selected){
+        return alert('Please select a destination before saving.');
+    }
+    const trips = JSON.parse(localStorage.getItem('saved_trips')||'[]'); 
+    const trip = { id:'trip_'+Date.now(), created: new Date().toISOString(), destination: state.selected, selectionDetails: state.selectionDetails, itinerary: state.itinerary, budget: state.budget }; 
+    trips.push(trip); 
+    localStorage.setItem('saved_trips', JSON.stringify(trips)); 
+    alert('Trip to ' + state.destinations.find(d=>d.id===state.selected).name + ' saved successfully!'); 
+  }
+
+  function exportItinerary(){ 
+    const data = { destination: state.selected, itinerary: state.itinerary, budget: state.budget }; 
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); 
+    const url = URL.createObjectURL(blob); 
+    const a = document.createElement('a'); 
+    a.href=url; 
+    a.download='itinerary.json'; 
+    document.body.appendChild(a); 
+    a.click(); 
+    a.remove(); 
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- NEW: Bookings Modal Logic ----------
+  function renderBookings(){
+    const container = $('#bookingsModalBody');
+    const trips = JSON.parse(localStorage.getItem('saved_trips') || '[]');
+    container.empty();
+    if(!trips.length){
+        container.html('<p class="text-muted">You have no saved trips yet.</p>');
+        return;
+    }
+
+    const list = $('<ul class="list-group"></ul>');
+    trips.forEach(trip => {
+        const dest = SAMPLE_DESTINATIONS.find(d => d.id === trip.destination);
+        const totalBudget = (trip.budget.transport||0) + (trip.budget.accommodation||0) + (trip.budget.activities||0) + (trip.budget.other||0);
+        const li = $(`<li class="list-group-item">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">${dest ? dest.name : 'Unknown Destination'}</h5>
+                <small>Saved: ${new Date(trip.created).toLocaleDateString()}</small>
+            </div>
+            <p class="mb-1"><strong>Total Budget:</strong> ₹${totalBudget.toLocaleString('en-IN')}</p>
+            <small>${trip.itinerary.length} activities planned.</small>
+        </li>`);
+        list.append(li);
+    });
+    container.append(list);
+  }
+
+  // ---------- Utilities ----------
+  function loadSampleDestinations(){ 
+    state.destinations = SAMPLE_DESTINATIONS; 
+    saveState(); 
+    renderDestinations(state.destinations); 
+  }
+
+  function resetApp(){ 
+    if(!confirm('Reset all locally stored planning data? This cannot be undone.')) return; 
+    localStorage.removeItem(STATE_KEY); 
+    localStorage.removeItem('saved_trips'); 
+    window.location.reload();
+  }
+
+  function renderAll(){ 
+    renderDestinations(state.destinations); 
+    if(state.selected) {
+        selectDestination(state.selected);
+        refreshSelectionControls();
+    }
+    renderItinerary(); 
+    renderBudget(); 
+  }
+
+  // ---------- Event wiring ----------
+  $(function(){
+    loadState(); 
+    if(!state.destinations.length){ 
+      state.destinations = SAMPLE_DESTINATIONS; 
+    }
+    renderAll();
+
+    $('#filterBtn').on('click',()=>{ 
+      const interest = $('#interestFilter').val(); 
+      const kw = $('#keyword').val().toLowerCase().trim(); 
+      let list = state.destinations.slice(); 
+      if(interest!=='all') list = list.filter(d=> d.tags.includes(interest)); 
+      if(kw) list = list.filter(d=> d.name.toLowerCase().includes(kw) || d.desc.toLowerCase().includes(kw)); 
+      renderDestinations(list); 
+    });
+
+    $('#loadSample').on('click',()=>{ 
+      loadSampleDestinations(); 
+      alert('Sample destinations loaded.'); 
+    });
+    $('#resetApp').on('click',resetApp);
+
+    $('#addActivity').on('click',addActivity);
+    $('#exportItinerary').on('click',exportItinerary);
+    $('#clearItinerary').on('click',()=>{ 
+      if(confirm('Clear all activities from the itinerary?')){ 
+        state.itinerary=[]; 
+        state.budget.activities=0; 
+        renderItinerary(); 
+        renderBudget(); 
+        saveState(); 
+      } 
+    });
+
+    $('#recalcBudget, #costOther').on('click input', recalcBudgetFromSelection);
+    $('#saveTrip').on('click',saveTrip);
+    $('#saveSelection').on('click',()=>{
+      if(!state.selected) return alert('Pick a destination first.'); 
+      const dest = state.destinations.find(x=>x.id===state.selected);
+      const accId = $('#accommodation').val(); 
+      const trId = $('#transport').val(); 
+      if(accId==='none' || trId==='none') return alert('Please pick accommodation and transport.'); 
+      state.selectionDetails = { accommodation: accId, transport: trId };
+      
+      const acc = dest.accommodations.find(a=>a.id===accId); 
+      const tr = dest.transports.find(t=>t.id===trId); 
+      state.budget.accommodation = acc ? acc.price : 0; 
+      state.budget.transport = tr ? tr.price : 0; 
+      saveState(); 
+      renderBudget(); 
+      alert('Selection saved.');
+    });
+
+    $('#accommodation, #transport').on('change', recalcBudgetFromSelection);
+    
+    // NEW: Modal event listeners
+    $('#bookingsModal').on('show.bs.modal', renderBookings);
+    $('#clearAllBookings').on('click', ()=>{
+        if(confirm('Are you sure you want to delete ALL saved bookings?')){
+            localStorage.removeItem('saved_trips');
+            renderBookings(); // re-render the modal body to show it's empty
+        }
+    });
+
+  });
+  </script>
+</body>
+</html>
